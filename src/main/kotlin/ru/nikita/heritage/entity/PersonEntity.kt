@@ -1,8 +1,6 @@
 package ru.nikita.heritage.entity
 
 import jakarta.persistence.*
-import org.hibernate.annotations.IdGeneratorType
-import org.hibernate.id.IncrementGenerator
 import org.hibernate.proxy.HibernateProxy
 import java.time.LocalDate
 
@@ -17,7 +15,7 @@ import java.time.LocalDate
 data class PersonEntity(
     @Id // Идентификатор
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long,
+    var id: Long = 0L,
     @Column(name = "last_name") // колонка фамилия
     var lastName: String,
     @Column(name = "first_name") // колонка имя
@@ -41,7 +39,7 @@ data class PersonEntity(
         if (thisEffectiveClass != oEffectiveClass) return false
         other as PersonEntity
 
-        return id != null && id == other.id
+        return id == other.id
     }
 
     final override fun hashCode(): Int =

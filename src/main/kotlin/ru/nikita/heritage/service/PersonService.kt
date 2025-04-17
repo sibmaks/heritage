@@ -1,10 +1,9 @@
 package ru.nikita.heritage.service
 
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 import ru.nikita.heritage.api.Person
-import ru.nikita.heritage.entity.PersonEntity
+import ru.nikita.heritage.converter.PersonConverter
 import ru.nikita.heritage.repository.PersonRepository
 
 /**
@@ -14,23 +13,16 @@ import ru.nikita.heritage.repository.PersonRepository
  */
 @Service
 class PersonService(
-    val personRepository: PersonRepository
+    val personRepository: PersonRepository,
+    val personConverter: PersonConverter
 ) {
 
     /**
      * Добавление человека в Базу данных
      */
     fun add(person: Person): Long {
-        val entity = personRepository.save(
-            PersonEntity(
-                id = 0,
-                lastName = person.lastName,
-                firstName = person.firstName,
-                middleName = person.middleName,
-                birthDate = person.birthDate,
-                deathDate = person.deathDate
-            )
-        )
+        var entity = personConverter.map(person)
+        entity = personRepository.save(entity)
         return entity.id
     }
 
@@ -58,13 +50,7 @@ class PersonService(
     fun getById(id: Long): Person {
         val entity = personRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Человек с id: $id не найден") }
-        return Person(
-            lastName = entity.lastName,
-            firstName = entity.firstName,
-            middleName = entity.middleName,
-            birthDate = entity.birthDate,
-            deathDate = entity.deathDate
-        )
+        return personConverter.map(entity)
     }
 
     /**
