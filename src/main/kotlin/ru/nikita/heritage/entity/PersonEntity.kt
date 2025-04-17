@@ -23,7 +23,7 @@ data class PersonEntity(
     @Column(name = "middle_name") // колонка отчество
     var middleName: String?,
     @Column(name = "birth_date") // колонка дата рождения
-    var birthDate: LocalDate,
+    var birthDate: LocalDate?,
     @Column(name = "death_date") // колонка дата смерти
     var deathDate: LocalDate?,
 ) {

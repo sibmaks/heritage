@@ -12,7 +12,7 @@ import ru.nikita.heritage.service.PersonService
  * @since 0.0.1
  */
 @RestController
-@RequestMapping("/heritage/") // куда отправлять запросы
+@RequestMapping("/api/heritage/") // куда отправлять запросы
 class HeritageRestController(
     val personService: PersonService,
 ) {

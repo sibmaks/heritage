@@ -15,7 +15,7 @@ data class Person(
     // отчество
     val middleName: String? = null,
     // дата рождения
-    val birthDate: LocalDate,
+    val birthDate: LocalDate? = null,
     // дата смерти
     val deathDate: LocalDate? = null,
 )
