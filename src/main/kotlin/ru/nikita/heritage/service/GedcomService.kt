@@ -10,6 +10,7 @@ import ru.nikita.heritage.entity.PersonEntity
 import ru.nikita.heritage.repository.MarriageRepository
 import ru.nikita.heritage.repository.PersonRepository
 import java.time.LocalDate
+import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
@@ -24,8 +25,14 @@ class GedcomService(
     val personRepository: PersonRepository,
     val marriageRepository: MarriageRepository,
 ) {
-    private val gedcomDateFormatter = DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH)
-    private val yearFormatter = DateTimeFormatter.ofPattern("uuuu", Locale.ENGLISH)
+    private val gedcomDateFormatter = DateTimeFormatterBuilder()
+        .parseCaseInsensitive()
+        .appendPattern("d MMM uuuu")
+        .toFormatter(Locale.ENGLISH)
+    private val yearFormatter = DateTimeFormatterBuilder()
+        .parseCaseInsensitive()
+        .appendPattern("uuuu")
+        .toFormatter(Locale.ENGLISH)
 
     fun exportGedcom(): String {
         val persons = personRepository.findAll()

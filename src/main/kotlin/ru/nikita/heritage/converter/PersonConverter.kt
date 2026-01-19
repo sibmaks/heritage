@@ -5,6 +5,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingConstants
 import org.mapstruct.ReportingPolicy
 import ru.nikita.heritage.api.FlexibleDate
+import ru.nikita.heritage.api.FlexibleDateType
 import ru.nikita.heritage.api.Person
 import ru.nikita.heritage.entity.FlexibleDateEntity
 import ru.nikita.heritage.entity.PersonEntity
@@ -31,7 +32,32 @@ interface PersonConverter {
     @Mapping(target = "father", ignore = true)
     fun map(person: Person): PersonEntity
 
-    fun map(entity: FlexibleDateEntity?): FlexibleDate?
+    fun map(entity: FlexibleDateEntity?): FlexibleDate? {
+        if (entity == null) {
+            return null
+        }
+        val inferredType = entity.type ?: when {
+            entity.startDate != null || entity.endDate != null -> FlexibleDateType.BETWEEN
+            entity.date != null -> FlexibleDateType.EXACT
+            else -> FlexibleDateType.EXACT
+        }
+        return FlexibleDate(
+            type = inferredType,
+            date = entity.date,
+            startDate = entity.startDate,
+            endDate = entity.endDate,
+        )
+    }
 
-    fun map(date: FlexibleDate?): FlexibleDateEntity?
+    fun map(date: FlexibleDate?): FlexibleDateEntity? {
+        if (date == null) {
+            return null
+        }
+        return FlexibleDateEntity(
+            type = date.type,
+            date = date.date,
+            startDate = date.startDate,
+            endDate = date.endDate,
+        )
+    }
 }
