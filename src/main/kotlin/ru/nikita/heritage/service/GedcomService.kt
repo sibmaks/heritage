@@ -338,6 +338,9 @@ class GedcomService(
         if (value.isNullOrBlank()) {
             return null to null
         }
+        if (value.replace("/", "").trim().isEmpty()) {
+            return null to null
+        }
         val lastName = Regex("/([^/]+)/").find(value)?.groupValues?.get(1)
         val given = value.replace(Regex("/[^/]+/"), "").trim()
         val parts = given.split(" ").filter { it.isNotBlank() }
