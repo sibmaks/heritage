@@ -33,6 +33,9 @@ interface PersonConverter {
     @Mapping(target = "mother", ignore = true)
     @Mapping(target = "father", ignore = true)
     @Mapping(target = "death", ignore = true)
+    @Mapping(target = "externalUuid", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     fun map(person: Person): PersonEntity
 
     fun map(entity: FlexibleDateEntity?): FlexibleDate? {
