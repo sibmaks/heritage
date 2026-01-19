@@ -1,10 +1,10 @@
 plugins {
-	kotlin("jvm") version "2.1.20"
-	kotlin("plugin.spring") version "2.1.20"
-	id("org.jetbrains.kotlin.kapt") version "2.1.20"
-	id("org.springframework.boot") version "3.4.4"
-	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "2.1.20"
+	kotlin("jvm") version "2.3.0"
+	kotlin("plugin.spring") version "2.3.0"
+	id("org.jetbrains.kotlin.kapt") version "2.3.0"
+	alias(libs.plugins.spring.framework.boot)
+	alias(libs.plugins.spring.dependency.managment)
+	kotlin("plugin.jpa") version "2.3.0"
 }
 
 group = "ru.nikita"
@@ -33,11 +33,11 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.flywaydb:flyway-core")
 
-	implementation("org.mapstruct:mapstruct:1.6.3")
+	implementation(libs.mapstruct)
 
 	runtimeOnly("com.h2database:h2")
 
-	kapt("org.mapstruct:mapstruct-processor:1.6.3")
+	kapt(libs.mapstruct.processor)
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

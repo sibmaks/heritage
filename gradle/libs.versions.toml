@@ -1,0 +1,13 @@
+[versions]
+spring-framework = "3.5.9"
+spring-dependency-managment = "1.1.7"
+
+mapstruct = "1.6.2"
+
+[libraries]
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+
+[plugins]
+spring-framework-boot = { id = "org.springframework.boot", version.ref = "spring-framework" }
+spring-dependency-managment = { id = "io.spring.dependency-management", version.ref = "spring-dependency-managment" }

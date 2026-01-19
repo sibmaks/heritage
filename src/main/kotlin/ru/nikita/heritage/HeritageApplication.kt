@@ -7,8 +7,9 @@ import org.springframework.boot.runApplication
 class HeritageApplication
 
 /**
- * Запускает твоё охуенное приложение
+ * @since 0.0.1
+ * @author sibmaks
  */
 fun main(args: Array<String>) {
-	runApplication<HeritageApplication>(*args)
+    runApplication<HeritageApplication>(*args)
 }

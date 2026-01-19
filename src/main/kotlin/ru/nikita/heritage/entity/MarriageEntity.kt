@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
 import org.hibernate.proxy.HibernateProxy
 
 /**
