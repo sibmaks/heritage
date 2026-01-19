@@ -115,10 +115,9 @@ class GedcomService(
 
         val personEntities = persons.values.map { data ->
             PersonEntity(
-                lastName = data.lastName ?: "Unknown",
-                firstName = data.firstName ?: "Unknown",
+                lastName = data.lastName,
+                firstName = data.firstName,
                 gender = data.gender ?: true,
-                middleName = data.middleName,
                 marriedLastName = data.marriedLastName,
                 birthPlace = data.birthPlace,
                 deathPlace = data.deathPlace,
@@ -168,8 +167,8 @@ class GedcomService(
     }
 
     private fun formatName(person: PersonEntity): String {
-        val given = listOfNotNull(person.firstName, person.middleName).joinToString(" ")
-        return "$given /${person.lastName}/"
+        val given = person.firstName.orEmpty()
+        return "$given /${person.lastName.orEmpty()}/"
     }
 
     private fun appendEvent(builder: StringBuilder, tag: String, date: FlexibleDateEntity?, place: String?) {
@@ -225,18 +224,15 @@ class GedcomService(
         }
         return when (tag) {
             "NAME" -> {
-                parseName(value).let { (first, middle, last) ->
+                parseName(value).let { (first, last) ->
                     if (person.firstName == null) {
                         person.firstName = first
-                    }
-                    if (person.middleName == null) {
-                        person.middleName = middle
                     }
                     if (person.lastName == null) {
                         person.lastName = last
                     }
                 }
-                null
+                "NAME"
             }
             "GIVN" -> {
                 person.firstName = value?.trim()
@@ -286,6 +282,7 @@ class GedcomService(
             return
         }
         when (event) {
+            "NAME" -> applyNameDetail(person, tag, value)
             "BIRT" -> applyEventToPerson(person, tag, value, isBirth = true)
             "DEAT" -> applyEventToPerson(person, tag, value, isBirth = false)
         }
@@ -337,16 +334,23 @@ class GedcomService(
         }
     }
 
-    private fun parseName(value: String?): Triple<String?, String?, String?> {
+    private fun parseName(value: String?): Pair<String?, String?> {
         if (value.isNullOrBlank()) {
-            return Triple(null, null, null)
+            return null to null
         }
         val lastName = Regex("/([^/]+)/").find(value)?.groupValues?.get(1)
         val given = value.replace(Regex("/[^/]+/"), "").trim()
         val parts = given.split(" ").filter { it.isNotBlank() }
         val first = parts.firstOrNull()
-        val middle = if (parts.size > 1) parts.drop(1).joinToString(" ") else null
-        return Triple(first, middle, lastName)
+        return first to lastName
+    }
+
+    private fun applyNameDetail(person: GedcomPersonData, tag: String, value: String?) {
+        when (tag) {
+            "GIVN" -> person.firstName = value?.trim()
+            "SURN" -> person.lastName = value?.trim()
+            "_MARNM" -> person.marriedLastName = value?.trim()
+        }
     }
 
     private fun parseFlexibleDate(value: String?): FlexibleDateEntity? {
@@ -432,7 +436,6 @@ class GedcomService(
         val id: String,
         var firstName: String? = null,
         var lastName: String? = null,
-        var middleName: String? = null,
         var gender: Boolean? = null,
         var marriedLastName: String? = null,
         var birthDate: FlexibleDateEntity? = null,

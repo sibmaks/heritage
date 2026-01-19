@@ -41,7 +41,6 @@ class PersonService(
             lastName = person.lastName
             firstName = person.firstName
             gender = person.gender
-            middleName = person.middleName
             marriedLastName = person.marriedLastName
             birthPlace = person.birthPlace
             deathPlace = person.deathPlace

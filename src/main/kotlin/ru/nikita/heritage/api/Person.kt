@@ -8,13 +8,11 @@ package ru.nikita.heritage.api
 data class Person(
     val id: Long? = null,
     // фамилия
-    val lastName: String,
+    val lastName: String? = null,
     // имя
-    val firstName: String,
+    val firstName: String? = null,
     // пол (true - мужской, false - женский)
     val gender: Boolean,
-    // отчество
-    val middleName: String? = null,
     // фамилия после замужества
     val marriedLastName: String? = null,
     // место рождения

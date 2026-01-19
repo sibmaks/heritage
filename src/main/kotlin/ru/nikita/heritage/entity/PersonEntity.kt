@@ -18,13 +18,11 @@ data class PersonEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L,
     @Column(name = "last_name") // колонка фамилия
-    var lastName: String,
+    var lastName: String?,
     @Column(name = "first_name") // колонка имя
-    var firstName: String,
+    var firstName: String?,
     @Column(name = "gender") // колонка пол
     var gender: Boolean,
-    @Column(name = "middle_name") // колонка отчество
-    var middleName: String?,
     @Column(name = "married_last_name") // колонка фамилия после замужества
     var marriedLastName: String? = null,
     @Column(name = "birth_place") // колонка место рождения
