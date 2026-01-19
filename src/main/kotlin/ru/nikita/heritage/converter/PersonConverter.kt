@@ -25,11 +25,14 @@ interface PersonConverter {
     @Mapping(target = "motherId", source = "mother.id")
     @Mapping(target = "fatherId", source = "father.id")
     @Mapping(target = "marriages", expression = "java(java.util.Collections.emptyList())")
+    @Mapping(target = "deathDate", source = "death.deathDate")
+    @Mapping(target = "deathPlace", source = "death.deathPlace")
     fun map(entity: PersonEntity): Person
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "mother", ignore = true)
     @Mapping(target = "father", ignore = true)
+    @Mapping(target = "death", ignore = true)
     fun map(person: Person): PersonEntity
 
     fun map(entity: FlexibleDateEntity?): FlexibleDate? {

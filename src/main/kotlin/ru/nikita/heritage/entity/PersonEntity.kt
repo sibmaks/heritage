@@ -2,8 +2,9 @@ package ru.nikita.heritage.entity
 
 import jakarta.persistence.*
 import org.hibernate.proxy.HibernateProxy
-import jakarta.persistence.AttributeOverride
-import jakarta.persistence.AttributeOverrides
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
+import java.time.OffsetDateTime
 
 /**
  * Класс, который будем "хранить" в базе данных
@@ -27,8 +28,6 @@ data class PersonEntity(
     var marriedLastName: String? = null,
     @Column(name = "birth_place") // колонка место рождения
     var birthPlace: String? = null,
-    @Column(name = "death_place") // колонка место смерти
-    var deathPlace: String? = null,
     @Embedded
     @AttributeOverrides(
         AttributeOverride(name = "type", column = Column(name = "birth_date_type")),
@@ -37,20 +36,23 @@ data class PersonEntity(
         AttributeOverride(name = "endDate", column = Column(name = "birth_date_end")),
     )
     var birthDate: FlexibleDateEntity? = null,
-    @Embedded
-    @AttributeOverrides(
-        AttributeOverride(name = "type", column = Column(name = "death_date_type")),
-        AttributeOverride(name = "date", column = Column(name = "death_date_value")),
-        AttributeOverride(name = "startDate", column = Column(name = "death_date_start")),
-        AttributeOverride(name = "endDate", column = Column(name = "death_date_end")),
-    )
-    var deathDate: FlexibleDateEntity? = null,
+    @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "death_id")
+    var death: DeathEntity? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mother_id")
     var mother: PersonEntity? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "father_id")
     var father: PersonEntity? = null,
+    @Column(name = "external_uuid")
+    var externalUuid: String? = null,
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    var createdAt: OffsetDateTime? = null,
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: OffsetDateTime? = null,
 ) {
 
     // это всё автоматически сгенерировано

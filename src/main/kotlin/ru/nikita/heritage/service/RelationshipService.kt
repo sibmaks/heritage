@@ -6,6 +6,7 @@ import ru.nikita.heritage.api.MarriageRequest
 import ru.nikita.heritage.api.ParentsRequest
 import ru.nikita.heritage.api.Person
 import ru.nikita.heritage.converter.PersonConverter
+import ru.nikita.heritage.entity.DivorceEntity
 import ru.nikita.heritage.entity.MarriageEntity
 import ru.nikita.heritage.repository.MarriageRepository
 import ru.nikita.heritage.repository.PersonRepository
@@ -49,7 +50,9 @@ class RelationshipService(
             spouseB = spouse,
             registrationDate = personConverter.map(request.registrationDate),
             registrationPlace = request.registrationPlace,
-            divorceDate = personConverter.map(request.divorceDate),
+            divorce = request.divorceDate?.let { date ->
+                DivorceEntity(divorceDate = personConverter.map(date))
+            },
         )
         return marriageRepository.save(marriage).id
     }

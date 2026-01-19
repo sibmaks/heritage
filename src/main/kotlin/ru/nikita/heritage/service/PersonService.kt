@@ -6,6 +6,7 @@ import ru.nikita.heritage.api.MarriageStatus
 import ru.nikita.heritage.api.Person
 import ru.nikita.heritage.api.PersonMarriage
 import ru.nikita.heritage.converter.PersonConverter
+import ru.nikita.heritage.entity.DeathEntity
 import ru.nikita.heritage.repository.MarriageRepository
 import ru.nikita.heritage.repository.PersonRepository
 
@@ -26,6 +27,7 @@ class PersonService(
      */
     fun add(person: Person): Long {
         var entity = personConverter.map(person)
+        entity.death = buildDeath(person)
         entity = personRepository.save(entity)
         return entity.id
     }
@@ -43,9 +45,8 @@ class PersonService(
             gender = person.gender
             marriedLastName = person.marriedLastName
             birthPlace = person.birthPlace
-            deathPlace = person.deathPlace
             birthDate = personConverter.map(person.birthDate)
-            deathDate = personConverter.map(person.deathDate)
+            death = buildDeath(person)
         }
         entity = personRepository.save(entity)
         return entity.id
@@ -64,14 +65,14 @@ class PersonService(
                     id = marriage.id,
                     husbandId = marriage.spouseA.id,
                     wifeId = marriage.spouseB.id,
-                    status = if (marriage.divorceDate == null) {
+                    status = if (marriage.divorce == null) {
                         MarriageStatus.ACTIVE
                     } else {
                         MarriageStatus.FORMER
                     },
                     registrationDate = personConverter.map(marriage.registrationDate),
                     registrationPlace = marriage.registrationPlace,
-                    divorceDate = personConverter.map(marriage.divorceDate),
+                    divorceDate = personConverter.map(marriage.divorce?.divorceDate),
                 )
             }
         return person.copy(marriages = marriages)
@@ -82,6 +83,16 @@ class PersonService(
      */
     fun deleteById(id: Long) {
         personRepository.deleteById(id)
+    }
+
+    private fun buildDeath(person: Person): DeathEntity? {
+        if (person.deathDate == null && person.deathPlace == null) {
+            return null
+        }
+        return DeathEntity(
+            deathDate = personConverter.map(person.deathDate),
+            deathPlace = person.deathPlace,
+        )
     }
 
 }

@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.nikita.heritage.api.FlexibleDateType
 import ru.nikita.heritage.api.GedcomImportResult
+import ru.nikita.heritage.entity.DeathEntity
+import ru.nikita.heritage.entity.DivorceEntity
 import ru.nikita.heritage.entity.FlexibleDateEntity
 import ru.nikita.heritage.entity.MarriageEntity
 import ru.nikita.heritage.entity.PersonEntity
@@ -50,7 +52,8 @@ class GedcomService(
             builder.appendLine("1 SEX ${if (person.gender) "M" else "F"}")
             person.marriedLastName?.let { builder.appendLine("1 _MARNM $it") }
             appendEvent(builder, "BIRT", person.birthDate, person.birthPlace)
-            appendEvent(builder, "DEAT", person.deathDate, person.deathPlace)
+            appendEvent(builder, "DEAT", person.death?.deathDate, person.death?.deathPlace)
+            person.externalUuid?.let { builder.appendLine("1 _UID $it") }
         }
         families.forEachIndexed { index, family ->
             builder.appendLine("0 @F${index + 1}@ FAM")
@@ -64,9 +67,9 @@ class GedcomService(
                     builder.appendLine("1 MARR")
                     appendEventDetails(builder, marriage.registrationDate, marriage.registrationPlace)
                 }
-                if (marriage.divorceDate != null) {
+                if (marriage.divorce?.divorceDate != null) {
                     builder.appendLine("1 DIV")
-                    appendEventDetails(builder, marriage.divorceDate, null)
+                    appendEventDetails(builder, marriage.divorce?.divorceDate, null)
                 }
             }
         }
@@ -127,9 +130,19 @@ class GedcomService(
                 gender = data.gender ?: true,
                 marriedLastName = data.marriedLastName,
                 birthPlace = data.birthPlace,
-                deathPlace = data.deathPlace,
                 birthDate = data.birthDate,
-                deathDate = data.deathDate,
+                death = data.deathDate?.let { deathDate ->
+                    DeathEntity(
+                        deathDate = deathDate,
+                        deathPlace = data.deathPlace,
+                    )
+                } ?: data.deathPlace?.let { place ->
+                    DeathEntity(
+                        deathDate = null,
+                        deathPlace = place,
+                    )
+                },
+                externalUuid = data.externalUuid,
             )
         }
         val savedPersons = personRepository.saveAll(personEntities)
@@ -159,7 +172,9 @@ class GedcomService(
                         spouseB = wife,
                         registrationDate = family.marriageDate,
                         registrationPlace = family.marriagePlace,
-                        divorceDate = family.divorceDate,
+                        divorce = family.divorceDate?.let { divorceDate ->
+                            DivorceEntity(divorceDate = divorceDate)
+                        },
                     )
                 )
                 marriagesCount += 1
@@ -251,6 +266,10 @@ class GedcomService(
             }
             "SEX" -> {
                 person.gender = value?.trim()?.uppercase() != "F"
+                null
+            }
+            "_UID" -> {
+                person.externalUuid = value?.trim()
                 null
             }
             "_MARNM" -> {
@@ -452,6 +471,7 @@ class GedcomService(
         var birthPlace: String? = null,
         var deathDate: FlexibleDateEntity? = null,
         var deathPlace: String? = null,
+        var externalUuid: String? = null,
     )
 
     private data class GedcomFamilyData(
