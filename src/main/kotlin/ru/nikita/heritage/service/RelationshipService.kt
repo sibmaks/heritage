@@ -8,7 +8,9 @@ import ru.nikita.heritage.api.Person
 import ru.nikita.heritage.converter.PersonConverter
 import ru.nikita.heritage.entity.DivorceEntity
 import ru.nikita.heritage.entity.MarriageEntity
+import ru.nikita.heritage.entity.PlaceEntity
 import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.PlaceRepository
 import ru.nikita.heritage.repository.PersonRepository
 import java.util.ArrayDeque
 
@@ -21,6 +23,7 @@ import java.util.ArrayDeque
 class RelationshipService(
     val personRepository: PersonRepository,
     val marriageRepository: MarriageRepository,
+    val placeRepository: PlaceRepository,
     val personConverter: PersonConverter,
 ) {
 
@@ -49,7 +52,7 @@ class RelationshipService(
             spouseA = person,
             spouseB = spouse,
             registrationDate = personConverter.map(request.registrationDate),
-            registrationPlace = request.registrationPlace,
+            registrationPlace = buildPlace(request.registrationPlace),
             divorce = request.divorceDate?.let { date ->
                 DivorceEntity(divorceDate = personConverter.map(date))
             },
@@ -90,5 +93,13 @@ class RelationshipService(
         val children = personRepository.findAllByMother_IdOrFather_Id(personId, personId)
         neighbors.addAll(children)
         return neighbors
+    }
+
+    private fun buildPlace(place: String?): PlaceEntity? {
+        if (place.isNullOrBlank()) {
+            return null
+        }
+        return placeRepository.findByName(place)
+            .orElseGet { placeRepository.save(PlaceEntity(name = place)) }
     }
 }

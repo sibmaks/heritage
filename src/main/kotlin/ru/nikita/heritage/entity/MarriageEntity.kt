@@ -2,7 +2,6 @@ package ru.nikita.heritage.entity
 
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.AttributeOverrides
-import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -41,8 +40,9 @@ data class MarriageEntity(
         AttributeOverride(name = "endDate", column = Column(name = "registration_date_end")),
     )
     var registrationDate: FlexibleDateEntity? = null,
-    @Column(name = "registration_place")
-    var registrationPlace: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "registration_place_id")
+    var registrationPlace: PlaceEntity? = null,
     @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     @JoinColumn(name = "divorce_id")
     var divorce: DivorceEntity? = null,

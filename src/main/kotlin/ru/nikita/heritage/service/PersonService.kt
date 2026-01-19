@@ -7,7 +7,9 @@ import ru.nikita.heritage.api.Person
 import ru.nikita.heritage.api.PersonMarriage
 import ru.nikita.heritage.converter.PersonConverter
 import ru.nikita.heritage.entity.DeathEntity
+import ru.nikita.heritage.entity.PlaceEntity
 import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.PlaceRepository
 import ru.nikita.heritage.repository.PersonRepository
 
 /**
@@ -19,6 +21,7 @@ import ru.nikita.heritage.repository.PersonRepository
 class PersonService(
     val personRepository: PersonRepository,
     val marriageRepository: MarriageRepository,
+    val placeRepository: PlaceRepository,
     val personConverter: PersonConverter
 ) {
 
@@ -28,6 +31,7 @@ class PersonService(
     fun add(person: Person): Long {
         var entity = personConverter.map(person)
         entity.death = buildDeath(person)
+        entity.birthPlace = buildPlace(person.birthPlace)
         entity = personRepository.save(entity)
         return entity.id
     }
@@ -44,7 +48,7 @@ class PersonService(
             firstName = person.firstName
             gender = person.gender
             marriedLastName = person.marriedLastName
-            birthPlace = person.birthPlace
+            birthPlace = buildPlace(person.birthPlace)
             birthDate = personConverter.map(person.birthDate)
             death = buildDeath(person)
         }
@@ -71,7 +75,7 @@ class PersonService(
                         MarriageStatus.FORMER
                     },
                     registrationDate = personConverter.map(marriage.registrationDate),
-                    registrationPlace = marriage.registrationPlace,
+                    registrationPlace = marriage.registrationPlace?.name,
                     divorceDate = personConverter.map(marriage.divorce?.divorceDate),
                 )
             }
@@ -91,8 +95,16 @@ class PersonService(
         }
         return DeathEntity(
             deathDate = personConverter.map(person.deathDate),
-            deathPlace = person.deathPlace,
+            deathPlace = buildPlace(person.deathPlace),
         )
+    }
+
+    private fun buildPlace(place: String?): PlaceEntity? {
+        if (place.isNullOrBlank()) {
+            return null
+        }
+        return placeRepository.findByName(place)
+            .orElseGet { placeRepository.save(PlaceEntity(name = place)) }
     }
 
 }

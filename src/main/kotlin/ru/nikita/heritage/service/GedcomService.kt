@@ -9,7 +9,9 @@ import ru.nikita.heritage.entity.DivorceEntity
 import ru.nikita.heritage.entity.FlexibleDateEntity
 import ru.nikita.heritage.entity.MarriageEntity
 import ru.nikita.heritage.entity.PersonEntity
+import ru.nikita.heritage.entity.PlaceEntity
 import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.PlaceRepository
 import ru.nikita.heritage.repository.PersonRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatterBuilder
@@ -26,6 +28,7 @@ import java.util.Locale
 class GedcomService(
     val personRepository: PersonRepository,
     val marriageRepository: MarriageRepository,
+    val placeRepository: PlaceRepository,
 ) {
     private val gedcomDateFormatter = DateTimeFormatterBuilder()
         .parseCaseInsensitive()
@@ -51,8 +54,8 @@ class GedcomService(
             builder.appendLine("1 NAME ${formatName(person)}")
             builder.appendLine("1 SEX ${if (person.gender) "M" else "F"}")
             person.marriedLastName?.let { builder.appendLine("1 _MARNM $it") }
-            appendEvent(builder, "BIRT", person.birthDate, person.birthPlace)
-            appendEvent(builder, "DEAT", person.death?.deathDate, person.death?.deathPlace)
+            appendEvent(builder, "BIRT", person.birthDate, person.birthPlace?.name)
+            appendEvent(builder, "DEAT", person.death?.deathDate, person.death?.deathPlace?.name)
             person.externalUuid?.let { builder.appendLine("1 _UID $it") }
         }
         families.forEachIndexed { index, family ->
@@ -65,7 +68,7 @@ class GedcomService(
             family.marriage?.let { marriage ->
                 if (marriage.registrationDate != null || marriage.registrationPlace != null) {
                     builder.appendLine("1 MARR")
-                    appendEventDetails(builder, marriage.registrationDate, marriage.registrationPlace)
+                    appendEventDetails(builder, marriage.registrationDate, marriage.registrationPlace?.name)
                 }
                 if (marriage.divorce?.divorceDate != null) {
                     builder.appendLine("1 DIV")
@@ -129,17 +132,17 @@ class GedcomService(
                 firstName = data.firstName,
                 gender = data.gender ?: true,
                 marriedLastName = data.marriedLastName,
-                birthPlace = data.birthPlace,
+                birthPlace = buildPlace(data.birthPlace),
                 birthDate = data.birthDate,
                 death = data.deathDate?.let { deathDate ->
                     DeathEntity(
                         deathDate = deathDate,
-                        deathPlace = data.deathPlace,
+                        deathPlace = buildPlace(data.deathPlace),
                     )
                 } ?: data.deathPlace?.let { place ->
                     DeathEntity(
                         deathDate = null,
-                        deathPlace = place,
+                        deathPlace = buildPlace(place),
                     )
                 },
                 externalUuid = data.externalUuid,
@@ -171,7 +174,7 @@ class GedcomService(
                         spouseA = husband,
                         spouseB = wife,
                         registrationDate = family.marriageDate,
-                        registrationPlace = family.marriagePlace,
+                        registrationPlace = buildPlace(family.marriagePlace),
                         divorce = family.divorceDate?.let { divorceDate ->
                             DivorceEntity(divorceDate = divorceDate)
                         },
@@ -452,6 +455,14 @@ class GedcomService(
     private fun pairKey(a: Long?, b: Long?): String {
         val ids = listOfNotNull(a, b).sorted()
         return ids.joinToString("-")
+    }
+
+    private fun buildPlace(place: String?): PlaceEntity? {
+        if (place.isNullOrBlank()) {
+            return null
+        }
+        return placeRepository.findByName(place)
+            .orElseGet { placeRepository.save(PlaceEntity(name = place)) }
     }
 
     private data class ParsedLine(

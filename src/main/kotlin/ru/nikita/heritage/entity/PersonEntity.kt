@@ -26,8 +26,9 @@ data class PersonEntity(
     var gender: Boolean,
     @Column(name = "married_last_name") // колонка фамилия после замужества
     var marriedLastName: String? = null,
-    @Column(name = "birth_place") // колонка место рождения
-    var birthPlace: String? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "birth_place_id")
+    var birthPlace: PlaceEntity? = null,
     @Embedded
     @AttributeOverrides(
         AttributeOverride(name = "type", column = Column(name = "birth_date_type")),

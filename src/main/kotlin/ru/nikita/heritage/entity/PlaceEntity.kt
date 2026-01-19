@@ -1,14 +1,10 @@
 package ru.nikita.heritage.entity
 
-import jakarta.persistence.AttributeOverride
-import jakarta.persistence.AttributeOverrides
-import jakarta.persistence.Embedded
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.proxy.HibernateProxy
 
@@ -18,22 +14,13 @@ import org.hibernate.proxy.HibernateProxy
  * @since 0.0.1
  */
 @Entity
-@Table(name = "death")
-data class DeathEntity(
+@Table(name = "place")
+data class PlaceEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L,
-    @Embedded
-    @AttributeOverrides(
-        AttributeOverride(name = "type", column = Column(name = "death_date_type")),
-        AttributeOverride(name = "date", column = Column(name = "death_date_value")),
-        AttributeOverride(name = "startDate", column = Column(name = "death_date_start")),
-        AttributeOverride(name = "endDate", column = Column(name = "death_date_end")),
-    )
-    var deathDate: FlexibleDateEntity? = null,
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @JoinColumn(name = "death_place_id")
-    var deathPlace: PlaceEntity? = null,
+    @Column(name = "name", unique = true, nullable = false)
+    var name: String,
 ) {
 
     final override fun equals(other: Any?): Boolean {
@@ -44,7 +31,7 @@ data class DeathEntity(
         val thisEffectiveClass =
             if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
         if (thisEffectiveClass != oEffectiveClass) return false
-        other as DeathEntity
+        other as PlaceEntity
 
         return id == other.id
     }
