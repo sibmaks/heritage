@@ -17,12 +17,13 @@ import ru.nikita.heritage.entity.PersonEntity
 @Mapper(
     componentModel = MappingConstants.ComponentModel.SPRING,
     unmappedTargetPolicy = ReportingPolicy.ERROR,
-    typeConversionPolicy = ReportingPolicy.WARN
+    typeConversionPolicy = ReportingPolicy.WARN,
+    nullValueMappingStrategy = org.mapstruct.NullValueMappingStrategy.RETURN_DEFAULT
 )
 interface PersonConverter {
     @Mapping(target = "motherId", source = "mother.id")
     @Mapping(target = "fatherId", source = "father.id")
-    @Mapping(target = "marriages", ignore = true)
+    @Mapping(target = "marriages", expression = "java(java.util.Collections.emptyList())")
     fun map(entity: PersonEntity): Person
 
     @Mapping(target = "id", ignore = true)
