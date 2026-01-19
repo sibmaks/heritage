@@ -21,6 +21,8 @@ data class PersonEntity(
     var lastName: String,
     @Column(name = "first_name") // колонка имя
     var firstName: String,
+    @Column(name = "gender") // колонка пол
+    var gender: Boolean,
     @Column(name = "middle_name") // колонка отчество
     var middleName: String?,
     @Column(name = "married_last_name") // колонка фамилия после замужества

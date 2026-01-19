@@ -11,6 +11,8 @@ data class Person(
     val lastName: String,
     // имя
     val firstName: String,
+    // пол (true - мужской, false - женский)
+    val gender: Boolean,
     // отчество
     val middleName: String? = null,
     // фамилия после замужества

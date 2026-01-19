@@ -40,7 +40,8 @@ class GedcomService(
         persons.forEach { person ->
             builder.appendLine("0 @I${person.id}@ INDI")
             builder.appendLine("1 NAME ${formatName(person)}")
-            person.marriedLastName?.let { builder.appendLine("1 _MARN $it") }
+            builder.appendLine("1 SEX ${if (person.gender) "M" else "F"}")
+            person.marriedLastName?.let { builder.appendLine("1 _MARNM $it") }
             appendEvent(builder, "BIRT", person.birthDate, person.birthPlace)
             appendEvent(builder, "DEAT", person.deathDate, person.deathPlace)
         }
@@ -116,6 +117,7 @@ class GedcomService(
             PersonEntity(
                 lastName = data.lastName ?: "Unknown",
                 firstName = data.firstName ?: "Unknown",
+                gender = data.gender ?: true,
                 middleName = data.middleName,
                 marriedLastName = data.marriedLastName,
                 birthPlace = data.birthPlace,
@@ -224,13 +226,31 @@ class GedcomService(
         return when (tag) {
             "NAME" -> {
                 parseName(value).let { (first, middle, last) ->
-                    person.firstName = first
-                    person.middleName = middle
-                    person.lastName = last
+                    if (person.firstName == null) {
+                        person.firstName = first
+                    }
+                    if (person.middleName == null) {
+                        person.middleName = middle
+                    }
+                    if (person.lastName == null) {
+                        person.lastName = last
+                    }
                 }
                 null
             }
-            "_MARN" -> {
+            "GIVN" -> {
+                person.firstName = value?.trim()
+                null
+            }
+            "SURN" -> {
+                person.lastName = value?.trim()
+                null
+            }
+            "SEX" -> {
+                person.gender = value?.trim()?.uppercase() != "F"
+                null
+            }
+            "_MARNM" -> {
                 person.marriedLastName = value?.trim()
                 null
             }
@@ -413,6 +433,7 @@ class GedcomService(
         var firstName: String? = null,
         var lastName: String? = null,
         var middleName: String? = null,
+        var gender: Boolean? = null,
         var marriedLastName: String? = null,
         var birthDate: FlexibleDateEntity? = null,
         var birthPlace: String? = null,
