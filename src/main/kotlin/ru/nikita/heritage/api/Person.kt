@@ -23,4 +23,10 @@ data class Person(
     val birthDate: FlexibleDate? = null,
     // гибкая дата смерти
     val deathDate: FlexibleDate? = null,
+    // идентификатор мамы
+    val motherId: Long? = null,
+    // идентификатор папы
+    val fatherId: Long? = null,
+    // браки
+    val marriages: List<PersonMarriage> = emptyList(),
 )

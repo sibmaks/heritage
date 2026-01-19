@@ -2,8 +2,11 @@ package ru.nikita.heritage.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import ru.nikita.heritage.api.MarriageStatus
 import ru.nikita.heritage.api.Person
+import ru.nikita.heritage.api.PersonMarriage
 import ru.nikita.heritage.converter.PersonConverter
+import ru.nikita.heritage.repository.MarriageRepository
 import ru.nikita.heritage.repository.PersonRepository
 
 /**
@@ -14,6 +17,7 @@ import ru.nikita.heritage.repository.PersonRepository
 @Service
 class PersonService(
     val personRepository: PersonRepository,
+    val marriageRepository: MarriageRepository,
     val personConverter: PersonConverter
 ) {
 
@@ -53,7 +57,24 @@ class PersonService(
     fun getById(id: Long): Person {
         val entity = personRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Человек с id: $id не найден") }
-        return personConverter.map(entity)
+        val person = personConverter.map(entity)
+        val marriages = marriageRepository.findAllBySpouseA_IdOrSpouseB_Id(id, id)
+            .map { marriage ->
+                PersonMarriage(
+                    id = marriage.id,
+                    husbandId = marriage.spouseA.id,
+                    wifeId = marriage.spouseB.id,
+                    status = if (marriage.divorceDate == null) {
+                        MarriageStatus.ACTIVE
+                    } else {
+                        MarriageStatus.FORMER
+                    },
+                    registrationDate = personConverter.map(marriage.registrationDate),
+                    registrationPlace = marriage.registrationPlace,
+                    divorceDate = personConverter.map(marriage.divorceDate),
+                )
+            }
+        return person.copy(marriages = marriages)
     }
 
     /**
