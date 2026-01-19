@@ -40,8 +40,8 @@ class PersonService(
             marriedLastName = person.marriedLastName
             birthPlace = person.birthPlace
             deathPlace = person.deathPlace
-            birthDate = person.birthDate
-            deathDate = person.deathDate
+            birthDate = personConverter.map(person.birthDate)
+            deathDate = personConverter.map(person.deathDate)
         }
         entity = personRepository.save(entity)
         return entity.id
