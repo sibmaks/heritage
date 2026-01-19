@@ -37,6 +37,9 @@ class PersonService(
             lastName = person.lastName
             firstName = person.firstName
             middleName = person.middleName
+            marriedLastName = person.marriedLastName
+            birthPlace = person.birthPlace
+            deathPlace = person.deathPlace
             birthDate = person.birthDate
             deathDate = person.deathDate
         }
