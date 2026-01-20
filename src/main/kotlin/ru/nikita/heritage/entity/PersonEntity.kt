@@ -18,10 +18,12 @@ data class PersonEntity(
     @Id // Идентификатор
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L,
-    @Column(name = "last_name") // колонка фамилия
-    var lastName: String?,
-    @Column(name = "first_name") // колонка имя
-    var firstName: String?,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_name_id")
+    var lastName: SurnameEntity?,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "first_name_id")
+    var firstName: NameEntity?,
     @Column(name = "gender") // колонка пол
     var gender: Boolean,
     @Column(name = "married_last_name") // колонка фамилия после замужества

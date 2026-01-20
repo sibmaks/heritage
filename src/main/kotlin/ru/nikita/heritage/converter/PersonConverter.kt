@@ -28,6 +28,8 @@ interface PersonConverter {
     @Mapping(target = "deathDate", source = "death.deathDate")
     @Mapping(target = "deathPlace", source = "death.deathPlace.name")
     @Mapping(target = "birthPlace", source = "birthPlace.name")
+    @Mapping(target = "firstName", source = "firstName.value")
+    @Mapping(target = "lastName", source = "lastName.value")
     fun map(entity: PersonEntity): Person
 
     @Mapping(target = "id", ignore = true)
@@ -35,6 +37,8 @@ interface PersonConverter {
     @Mapping(target = "father", ignore = true)
     @Mapping(target = "death", ignore = true)
     @Mapping(target = "birthPlace", ignore = true)
+    @Mapping(target = "firstName", ignore = true)
+    @Mapping(target = "lastName", ignore = true)
     @Mapping(target = "externalUuid", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

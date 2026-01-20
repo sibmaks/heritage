@@ -8,11 +8,15 @@ import ru.nikita.heritage.entity.DeathEntity
 import ru.nikita.heritage.entity.DivorceEntity
 import ru.nikita.heritage.entity.FlexibleDateEntity
 import ru.nikita.heritage.entity.MarriageEntity
+import ru.nikita.heritage.entity.NameEntity
 import ru.nikita.heritage.entity.PersonEntity
 import ru.nikita.heritage.entity.PlaceEntity
+import ru.nikita.heritage.entity.SurnameEntity
 import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.NameRepository
 import ru.nikita.heritage.repository.PlaceRepository
 import ru.nikita.heritage.repository.PersonRepository
+import ru.nikita.heritage.repository.SurnameRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeFormatter
@@ -29,6 +33,8 @@ class GedcomService(
     val personRepository: PersonRepository,
     val marriageRepository: MarriageRepository,
     val placeRepository: PlaceRepository,
+    val nameRepository: NameRepository,
+    val surnameRepository: SurnameRepository,
 ) {
     private val gedcomDateFormatter = DateTimeFormatterBuilder()
         .parseCaseInsensitive()
@@ -128,8 +134,8 @@ class GedcomService(
 
         val personEntities = persons.values.map { data ->
             PersonEntity(
-                lastName = data.lastName,
-                firstName = data.firstName,
+                lastName = buildSurname(data.lastName),
+                firstName = buildName(data.firstName),
                 gender = data.gender ?: true,
                 marriedLastName = data.marriedLastName,
                 birthPlace = buildPlace(data.birthPlace),
@@ -192,8 +198,8 @@ class GedcomService(
     }
 
     private fun formatName(person: PersonEntity): String {
-        val given = person.firstName.orEmpty()
-        return "$given /${person.lastName.orEmpty()}/"
+        val given = person.firstName?.value.orEmpty()
+        return "$given /${person.lastName?.value.orEmpty()}/"
     }
 
     private fun appendEvent(builder: StringBuilder, tag: String, date: FlexibleDateEntity?, place: String?) {
@@ -463,6 +469,22 @@ class GedcomService(
         }
         return placeRepository.findByName(place)
             .orElseGet { placeRepository.save(PlaceEntity(name = place)) }
+    }
+
+    private fun buildName(name: String?): NameEntity? {
+        if (name.isNullOrBlank()) {
+            return null
+        }
+        return nameRepository.findByValue(name)
+            .orElseGet { nameRepository.save(NameEntity(value = name)) }
+    }
+
+    private fun buildSurname(surname: String?): SurnameEntity? {
+        if (surname.isNullOrBlank()) {
+            return null
+        }
+        return surnameRepository.findByValue(surname)
+            .orElseGet { surnameRepository.save(SurnameEntity(value = surname)) }
     }
 
     private data class ParsedLine(

@@ -7,10 +7,14 @@ import ru.nikita.heritage.api.Person
 import ru.nikita.heritage.api.PersonMarriage
 import ru.nikita.heritage.converter.PersonConverter
 import ru.nikita.heritage.entity.DeathEntity
+import ru.nikita.heritage.entity.NameEntity
 import ru.nikita.heritage.entity.PlaceEntity
+import ru.nikita.heritage.entity.SurnameEntity
 import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.NameRepository
 import ru.nikita.heritage.repository.PlaceRepository
 import ru.nikita.heritage.repository.PersonRepository
+import ru.nikita.heritage.repository.SurnameRepository
 
 /**
  * Класс с логикой работы с людьми
@@ -22,6 +26,8 @@ class PersonService(
     val personRepository: PersonRepository,
     val marriageRepository: MarriageRepository,
     val placeRepository: PlaceRepository,
+    val nameRepository: NameRepository,
+    val surnameRepository: SurnameRepository,
     val personConverter: PersonConverter
 ) {
 
@@ -32,6 +38,8 @@ class PersonService(
         var entity = personConverter.map(person)
         entity.death = buildDeath(person)
         entity.birthPlace = buildPlace(person.birthPlace)
+        entity.firstName = buildName(person.firstName)
+        entity.lastName = buildSurname(person.lastName)
         entity = personRepository.save(entity)
         return entity.id
     }
@@ -44,14 +52,14 @@ class PersonService(
         var entity = personRepository.findByIdLocked(id)
             .orElseThrow { IllegalArgumentException("Человек с id: $id не найден") }
         entity.apply {
-            lastName = person.lastName
-            firstName = person.firstName
             gender = person.gender
             marriedLastName = person.marriedLastName
             birthPlace = buildPlace(person.birthPlace)
             birthDate = personConverter.map(person.birthDate)
             death = buildDeath(person)
         }
+        entity.firstName = buildName(person.firstName)
+        entity.lastName = buildSurname(person.lastName)
         entity = personRepository.save(entity)
         return entity.id
     }
@@ -105,6 +113,22 @@ class PersonService(
         }
         return placeRepository.findByName(place)
             .orElseGet { placeRepository.save(PlaceEntity(name = place)) }
+    }
+
+    private fun buildName(name: String?): NameEntity? {
+        if (name.isNullOrBlank()) {
+            return null
+        }
+        return nameRepository.findByValue(name)
+            .orElseGet { nameRepository.save(NameEntity(value = name)) }
+    }
+
+    private fun buildSurname(surname: String?): SurnameEntity? {
+        if (surname.isNullOrBlank()) {
+            return null
+        }
+        return surnameRepository.findByValue(surname)
+            .orElseGet { surnameRepository.save(SurnameEntity(value = surname)) }
     }
 
 }
