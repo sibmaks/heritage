@@ -91,6 +91,14 @@ class HeritageRestController(
     }
 
     /**
+     * Поиск человека по ФИО
+     */
+    @GetMapping("/persons/search")
+    fun searchPersons(@RequestParam query: String): PersonSearchResponse {
+        return personService.searchByName(query)
+    }
+
+    /**
      * Экспорт GEDCOM
      */
     @GetMapping("/gedcom/export", produces = [TEXT_PLAIN_VALUE])
