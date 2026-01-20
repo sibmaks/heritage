@@ -7,6 +7,6 @@ package ru.nikita.heritage.api
  */
 data class GedcomImportResult(
     val persons: Int,
-    val marriages: Int,
+    val relationships: Int,
     val families: Int,
 )

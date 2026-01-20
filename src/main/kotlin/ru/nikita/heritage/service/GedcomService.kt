@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.nikita.heritage.api.FlexibleDateType
 import ru.nikita.heritage.api.GedcomImportResult
+import ru.nikita.heritage.api.RelationshipType
 import ru.nikita.heritage.entity.*
 import ru.nikita.heritage.repository.*
 import java.time.LocalDate
@@ -19,7 +20,7 @@ import java.util.*
 @Service
 class GedcomService(
     val personRepository: PersonRepository,
-    val marriageRepository: MarriageRepository,
+    val relationshipRepository: RelationshipRepository,
     val placeRepository: PlaceRepository,
     val nameRepository: NameRepository,
     val surnameRepository: SurnameRepository,
@@ -35,8 +36,8 @@ class GedcomService(
 
     fun exportGedcom(): String {
         val persons = personRepository.findAll()
-        val marriages = marriageRepository.findAll()
-        val families = buildFamilies(persons, marriages)
+        val relationships = relationshipRepository.findAll()
+        val families = buildFamilies(persons, relationships)
         val builder = StringBuilder()
         builder.appendLine("0 HEAD")
         builder.appendLine("1 SOUR heritage")
@@ -51,6 +52,7 @@ class GedcomService(
             appendEvent(builder, "BIRT", person.birthDate, person.birthPlace?.name)
             appendEvent(builder, "DEAT", person.death?.deathDate, person.death?.deathPlace?.name)
             person.externalUuid?.let { builder.appendLine("1 _UID $it") }
+            person.biography?.let { builder.appendLine("1 NOTE $it") }
         }
         families.forEachIndexed { index, family ->
             builder.appendLine("0 @F${index + 1}@ FAM")
@@ -59,14 +61,14 @@ class GedcomService(
             family.childrenIds.forEach { childId ->
                 builder.appendLine("1 CHIL @I$childId@")
             }
-            family.marriage?.let { marriage ->
-                if (marriage.registrationDate != null || marriage.registrationPlace != null) {
+            family.relationship?.let { relationship ->
+                if (relationship.registrationDate != null || relationship.registrationPlace != null) {
                     builder.appendLine("1 MARR")
-                    appendEventDetails(builder, marriage.registrationDate, marriage.registrationPlace?.name)
+                    appendEventDetails(builder, relationship.registrationDate, relationship.registrationPlace?.name)
                 }
-                if (marriage.divorce?.divorceDate != null) {
+                if (relationship.divorce?.divorceDate != null) {
                     builder.appendLine("1 DIV")
-                    appendEventDetails(builder, marriage.divorce?.divorceDate, null)
+                    appendEventDetails(builder, relationship.divorce?.divorceDate, null)
                 }
             }
         }
@@ -126,6 +128,7 @@ class GedcomService(
                 firstName = buildName(data.firstName),
                 gender = data.gender ?: true,
                 marriedLastName = data.marriedLastName,
+                biography = data.biography,
                 birthPlace = buildPlace(data.birthPlace),
                 birthDate = data.birthDate,
                 death = data.deathDate?.let { deathDate ->
@@ -148,7 +151,7 @@ class GedcomService(
             personMap[key] = savedPersons[index]
         }
 
-        var marriagesCount = 0
+        var relationshipsCount = 0
         families.values.forEach { family ->
             val husband = family.husbandRef?.let { personMap[it] }
             val wife = family.wifeRef?.let { personMap[it] }
@@ -163,10 +166,11 @@ class GedcomService(
                 personRepository.save(child)
             }
             if (husband != null && wife != null) {
-                marriageRepository.save(
-                    MarriageEntity(
+                relationshipRepository.save(
+                    RelationshipEntity(
                         spouseA = husband,
                         spouseB = wife,
+                        relationshipType = RelationshipType.MARRIAGE,
                         registrationDate = family.marriageDate,
                         registrationPlace = buildPlace(family.marriagePlace),
                         divorce = family.divorceDate?.let { divorceDate ->
@@ -174,13 +178,13 @@ class GedcomService(
                         },
                     )
                 )
-                marriagesCount += 1
+                relationshipsCount += 1
             }
         }
 
         return GedcomImportResult(
             persons = savedPersons.size,
-            marriages = marriagesCount,
+            relationships = relationshipsCount,
             families = families.size,
         )
     }
@@ -271,6 +275,12 @@ class GedcomService(
             }
             "_MARNM" -> {
                 person.marriedLastName = value?.trim()
+                null
+            }
+            "NOTE", "BIO" -> {
+                if (person.biography == null) {
+                    person.biography = value?.trim()
+                }
                 null
             }
             "BIRT", "DEAT" -> tag
@@ -415,16 +425,16 @@ class GedcomService(
 
     private fun buildFamilies(
         persons: List<PersonEntity>,
-        marriages: List<MarriageEntity>
+        relationships: List<RelationshipEntity>
     ): List<FamilyExport> {
         val familiesByPair = LinkedHashMap<String, FamilyExport>()
-        marriages.forEach { marriage ->
-            val pairKey = pairKey(marriage.spouseA.id, marriage.spouseB.id)
+        relationships.filter { it.relationshipType == RelationshipType.MARRIAGE }.forEach { relationship ->
+            val pairKey = pairKey(relationship.spouseA.id, relationship.spouseB.id)
             familiesByPair[pairKey] = FamilyExport(
-                husbandId = marriage.spouseA.id,
-                wifeId = marriage.spouseB.id,
+                husbandId = relationship.spouseA.id,
+                wifeId = relationship.spouseB.id,
                 childrenIds = LinkedHashSet(),
-                marriage = marriage,
+                relationship = relationship,
             )
         }
         persons.forEach { person ->
@@ -437,7 +447,7 @@ class GedcomService(
                         husbandId = fatherId,
                         wifeId = motherId,
                         childrenIds = LinkedHashSet(),
-                        marriage = null,
+                        relationship = null,
                     )
                 }
                 family.childrenIds.add(person.id)
@@ -493,6 +503,7 @@ class GedcomService(
         var deathDate: FlexibleDateEntity? = null,
         var deathPlace: String? = null,
         var externalUuid: String? = null,
+        var biography: String? = null,
     )
 
     private data class GedcomFamilyData(
@@ -509,6 +520,6 @@ class GedcomService(
         val husbandId: Long?,
         val wifeId: Long?,
         val childrenIds: MutableSet<Long>,
-        val marriage: MarriageEntity?,
+        val relationship: RelationshipEntity?,
     )
 }

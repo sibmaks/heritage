@@ -24,7 +24,7 @@ import ru.nikita.heritage.entity.PersonEntity
 interface PersonConverter {
     @Mapping(target = "motherId", source = "mother.id")
     @Mapping(target = "fatherId", source = "father.id")
-    @Mapping(target = "marriages", expression = "java(java.util.Collections.emptyList())")
+    @Mapping(target = "relationships", expression = "java(java.util.Collections.emptyList())")
     @Mapping(target = "deathDate", source = "death.deathDate")
     @Mapping(target = "deathPlace", source = "death.deathPlace.name")
     @Mapping(target = "birthPlace", source = "birthPlace.name")

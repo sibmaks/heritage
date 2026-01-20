@@ -19,7 +19,7 @@ import ru.nikita.heritage.repository.*
 @Service
 class PersonService(
     val personRepository: PersonRepository,
-    val marriageRepository: MarriageRepository,
+    val relationshipRepository: RelationshipRepository,
     val placeRepository: PlaceRepository,
     val nameRepository: NameRepository,
     val surnameRepository: SurnameRepository,
@@ -51,6 +51,7 @@ class PersonService(
         entity.apply {
             gender = person.gender
             marriedLastName = person.marriedLastName
+            biography = person.biography
             birthPlace = buildPlace(person.birthPlace)
             birthDate = personConverter.map(person.birthDate)
             death = buildDeath(person)
@@ -68,23 +69,24 @@ class PersonService(
         val entity = personRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Человек с id: $id не найден") }
         val person = personConverter.map(entity)
-        val marriages = marriageRepository.findAllBySpouseA_IdOrSpouseB_Id(id, id)
-            .map { marriage ->
-                PersonMarriage(
-                    id = marriage.id,
-                    husbandId = marriage.spouseA.id,
-                    wifeId = marriage.spouseB.id,
-                    status = if (marriage.divorce == null) {
-                        MarriageStatus.ACTIVE
+        val relationships = relationshipRepository.findAllBySpouseA_IdOrSpouseB_Id(id, id)
+            .map { relationship ->
+                PersonRelationship(
+                    id = relationship.id,
+                    husbandId = relationship.spouseA.id,
+                    wifeId = relationship.spouseB.id,
+                    relationshipType = relationship.relationshipType,
+                    status = if (relationship.divorce == null) {
+                        RelationshipStatus.ACTIVE
                     } else {
-                        MarriageStatus.FORMER
+                        RelationshipStatus.FORMER
                     },
-                    registrationDate = personConverter.map(marriage.registrationDate),
-                    registrationPlace = marriage.registrationPlace?.name,
-                    divorceDate = personConverter.map(marriage.divorce?.divorceDate),
+                    registrationDate = personConverter.map(relationship.registrationDate),
+                    registrationPlace = relationship.registrationPlace?.name,
+                    divorceDate = personConverter.map(relationship.divorce?.divorceDate),
                 )
             }
-        return person.copy(marriages = marriages)
+        return person.copy(relationships = relationships)
     }
 
     /**
