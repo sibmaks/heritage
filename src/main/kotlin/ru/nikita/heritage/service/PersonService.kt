@@ -1,27 +1,15 @@
 package ru.nikita.heritage.service
 
+import jakarta.persistence.criteria.JoinType
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import ru.nikita.heritage.api.MarriageStatus
-import ru.nikita.heritage.api.Person
-import ru.nikita.heritage.api.PersonMarriage
-import ru.nikita.heritage.api.PersonSearchItem
-import ru.nikita.heritage.api.PersonSearchResponse
+import ru.nikita.heritage.api.*
 import ru.nikita.heritage.converter.PersonConverter
-import ru.nikita.heritage.entity.DeathEntity
-import ru.nikita.heritage.entity.NameEntity
-import ru.nikita.heritage.entity.PlaceEntity
-import ru.nikita.heritage.entity.PersonEntity
-import ru.nikita.heritage.entity.SurnameEntity
-import ru.nikita.heritage.repository.MarriageRepository
-import ru.nikita.heritage.repository.NameRepository
-import ru.nikita.heritage.repository.PlaceRepository
-import ru.nikita.heritage.repository.PersonRepository
-import ru.nikita.heritage.repository.SurnameRepository
-import jakarta.persistence.criteria.JoinType
+import ru.nikita.heritage.entity.*
+import ru.nikita.heritage.repository.*
 
 /**
  * Класс с логикой работы с людьми
@@ -36,7 +24,7 @@ class PersonService(
     val nameRepository: NameRepository,
     val surnameRepository: SurnameRepository,
     val personConverter: PersonConverter,
-    @Value("\${heritage.search.limit:20}")
+    @param:Value($$"${heritage.search.limit:20}")
     private val searchLimit: Int,
 ) {
 
@@ -115,7 +103,7 @@ class PersonService(
             return PersonSearchResponse(persons = emptyList(), hasMore = false)
         }
         val specification = Specification<PersonEntity> { root, criteriaQuery, criteriaBuilder ->
-            criteriaQuery.distinct(true)
+            criteriaQuery?.distinct(true)
             val lastNameJoin = root.join<PersonEntity, SurnameEntity>("lastName", JoinType.LEFT)
             val firstNameJoin = root.join<PersonEntity, NameEntity>("firstName", JoinType.LEFT)
             val predicates = terms.map { term ->
