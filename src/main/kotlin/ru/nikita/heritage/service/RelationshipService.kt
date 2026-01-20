@@ -76,7 +76,7 @@ class RelationshipService(
             val neighbors = getNeighbors(currentId)
             for (neighbor in neighbors) {
                 if (visited.add(neighbor.id)) {
-                    result.add(personConverter.map(neighbor))
+                    result.add(buildRelative(neighbor))
                     queue.add(neighbor.id to currentDepth + 1)
                 }
             }
@@ -93,6 +93,31 @@ class RelationshipService(
         val children = personRepository.findAllByMother_IdOrFather_Id(personId, personId)
         neighbors.addAll(children)
         return neighbors
+    }
+
+    private fun buildRelative(person: ru.nikita.heritage.entity.PersonEntity): Person {
+        val base = personConverter.map(person)
+        val marriages = marriageRepository.findAllBySpouseA_IdOrSpouseB_Id(person.id, person.id)
+            .map { marriage ->
+                ru.nikita.heritage.api.PersonMarriage(
+                    id = marriage.id,
+                    husbandId = marriage.spouseA.id,
+                    wifeId = marriage.spouseB.id,
+                    status = if (marriage.divorce == null) {
+                        ru.nikita.heritage.api.MarriageStatus.ACTIVE
+                    } else {
+                        ru.nikita.heritage.api.MarriageStatus.FORMER
+                    },
+                    registrationDate = personConverter.map(marriage.registrationDate),
+                    registrationPlace = marriage.registrationPlace?.name,
+                    divorceDate = personConverter.map(marriage.divorce?.divorceDate),
+                )
+            }
+        return base.copy(
+            birthPlace = null,
+            deathPlace = null,
+            marriages = marriages,
+        )
     }
 
     private fun buildPlace(place: String?): PlaceEntity? {
