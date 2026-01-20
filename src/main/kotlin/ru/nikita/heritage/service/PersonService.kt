@@ -1,20 +1,15 @@
 package ru.nikita.heritage.service
 
+import jakarta.persistence.criteria.JoinType
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import ru.nikita.heritage.api.MarriageStatus
-import ru.nikita.heritage.api.Person
-import ru.nikita.heritage.api.PersonMarriage
+import ru.nikita.heritage.api.*
 import ru.nikita.heritage.converter.PersonConverter
-import ru.nikita.heritage.entity.DeathEntity
-import ru.nikita.heritage.entity.NameEntity
-import ru.nikita.heritage.entity.PlaceEntity
-import ru.nikita.heritage.entity.SurnameEntity
-import ru.nikita.heritage.repository.MarriageRepository
-import ru.nikita.heritage.repository.NameRepository
-import ru.nikita.heritage.repository.PlaceRepository
-import ru.nikita.heritage.repository.PersonRepository
-import ru.nikita.heritage.repository.SurnameRepository
+import ru.nikita.heritage.entity.*
+import ru.nikita.heritage.repository.*
 
 /**
  * Класс с логикой работы с людьми
@@ -28,7 +23,9 @@ class PersonService(
     val placeRepository: PlaceRepository,
     val nameRepository: NameRepository,
     val surnameRepository: SurnameRepository,
-    val personConverter: PersonConverter
+    val personConverter: PersonConverter,
+    @param:Value($$"${heritage.search.limit:20}")
+    private val searchLimit: Int,
 ) {
 
     /**
@@ -97,6 +94,51 @@ class PersonService(
         personRepository.deleteById(id)
     }
 
+    fun searchByName(query: String): PersonSearchResponse {
+        val terms = query.split(" ")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .map { it.lowercase() }
+        if (terms.isEmpty()) {
+            return PersonSearchResponse(persons = emptyList(), hasMore = false)
+        }
+        val specification = Specification<PersonEntity> { root, criteriaQuery, criteriaBuilder ->
+            criteriaQuery?.distinct(true)
+            val lastNameJoin = root.join<PersonEntity, SurnameEntity>("lastName", JoinType.LEFT)
+            val firstNameJoin = root.join<PersonEntity, NameEntity>("firstName", JoinType.LEFT)
+            val predicates = terms.map { term ->
+                val likeValue = "%$term%"
+                val lastNameValue = criteriaBuilder.lower(criteriaBuilder.coalesce(lastNameJoin.get("value"), ""))
+                val firstNameValue = criteriaBuilder.lower(criteriaBuilder.coalesce(firstNameJoin.get("value"), ""))
+                val marriedLastNameValue = criteriaBuilder.lower(criteriaBuilder.coalesce(root.get("marriedLastName"), ""))
+                criteriaBuilder.or(
+                    criteriaBuilder.like(lastNameValue, likeValue),
+                    criteriaBuilder.like(firstNameValue, likeValue),
+                    criteriaBuilder.like(marriedLastNameValue, likeValue),
+                )
+            }
+            criteriaBuilder.and(*predicates.toTypedArray())
+        }
+        val pageRequest = PageRequest.of(0, searchLimit + 1)
+        val results = personRepository.findAll(specification, pageRequest).content
+        val hasMore = results.size > searchLimit
+        val items = results.take(searchLimit).map { entity ->
+            val fullName = buildFullName(
+                lastName = entity.lastName?.value,
+                firstName = entity.firstName?.value,
+                marriedLastName = entity.marriedLastName
+            )
+            PersonSearchItem(
+                id = entity.id,
+                fullName = fullName,
+                gender = entity.gender,
+                birthDate = personConverter.map(entity.birthDate),
+                deathDate = personConverter.map(entity.death?.deathDate),
+            )
+        }
+        return PersonSearchResponse(persons = items, hasMore = hasMore)
+    }
+
     private fun buildDeath(person: Person): DeathEntity? {
         if (person.deathDate == null && person.deathPlace == null) {
             return null
@@ -131,4 +173,20 @@ class PersonService(
             .orElseGet { surnameRepository.save(SurnameEntity(value = surname)) }
     }
 
+    private fun buildFullName(
+        lastName: String?,
+        firstName: String?,
+        marriedLastName: String?,
+    ): String {
+        val parts = listOfNotNull(
+            lastName?.takeIf { it.isNotBlank() },
+            firstName?.takeIf { it.isNotBlank() },
+        )
+        val baseName = parts.joinToString(" ").ifBlank { "—" }
+        return if (marriedLastName.isNullOrBlank()) {
+            baseName
+        } else {
+            "$baseName (${marriedLastName.trim()})"
+        }
+    }
 }

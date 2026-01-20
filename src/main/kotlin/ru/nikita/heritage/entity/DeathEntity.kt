@@ -22,7 +22,7 @@ data class DeathEntity(
         AttributeOverride(name = "endDate", column = Column(name = "death_date_end")),
     )
     var deathDate: FlexibleDateEntity? = null,
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "death_place_id")
     var deathPlace: PlaceEntity? = null,
 ) {

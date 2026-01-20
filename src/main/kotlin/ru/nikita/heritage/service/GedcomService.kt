@@ -4,24 +4,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.nikita.heritage.api.FlexibleDateType
 import ru.nikita.heritage.api.GedcomImportResult
-import ru.nikita.heritage.entity.DeathEntity
-import ru.nikita.heritage.entity.DivorceEntity
-import ru.nikita.heritage.entity.FlexibleDateEntity
-import ru.nikita.heritage.entity.MarriageEntity
-import ru.nikita.heritage.entity.NameEntity
-import ru.nikita.heritage.entity.PersonEntity
-import ru.nikita.heritage.entity.PlaceEntity
-import ru.nikita.heritage.entity.SurnameEntity
-import ru.nikita.heritage.repository.MarriageRepository
-import ru.nikita.heritage.repository.NameRepository
-import ru.nikita.heritage.repository.PlaceRepository
-import ru.nikita.heritage.repository.PersonRepository
-import ru.nikita.heritage.repository.SurnameRepository
+import ru.nikita.heritage.entity.*
+import ru.nikita.heritage.repository.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatterBuilder
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
+import java.util.*
 
 /**
  *

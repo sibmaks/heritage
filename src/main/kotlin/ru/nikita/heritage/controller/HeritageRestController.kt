@@ -1,5 +1,8 @@
 package ru.nikita.heritage.controller
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.web.bind.annotation.*
@@ -14,6 +17,7 @@ import ru.nikita.heritage.service.RelationshipService
  * @author sibmaks
  * @since 0.0.1
  */
+@Tag(name = "Heritage API", description = "Endpoints for managing people and relationships.")
 @RestController
 @RequestMapping("/api/heritage/")
 class HeritageRestController(
@@ -88,6 +92,24 @@ class HeritageRestController(
         @RequestParam depth: Int
     ): RelativesResponse {
         return relationshipService.getRelatives(personId, depth)
+    }
+
+    /**
+     * Поиск человека по ФИО
+     */
+    @GetMapping("/persons/search")
+    @Operation(
+        summary = "Search persons by name",
+        description = "Splits the query by spaces and matches each term against last name, first name, or married last name."
+    )
+    fun searchPersons(
+        @Parameter(
+            description = "Search string containing last name, first name, or married last name.",
+            example = "Ivanova Maria"
+        )
+        @RequestParam query: String
+    ): PersonSearchResponse {
+        return personService.searchByName(query)
     }
 
     /**
