@@ -73,14 +73,14 @@ class HeritageRestController(
     }
 
     /**
-     * Добавить брак
+     * Добавить отношения
      */
-    @PostMapping("/{personId}/marriages", consumes = [APPLICATION_JSON_VALUE])
-    fun addMarriage(
+    @PostMapping("/{personId}/relationships", consumes = [APPLICATION_JSON_VALUE])
+    fun addRelationship(
         @PathVariable personId: Long,
-        @RequestBody request: MarriageRequest
+        @RequestBody request: RelationshipRequest
     ): Long {
-        return relationshipService.addMarriage(personId, request)
+        return relationshipService.addRelationship(personId, request)
     }
 
     /**

@@ -7,5 +7,5 @@ package ru.nikita.heritage.api
  */
 data class RelativesResponse(
     val persons: List<RelativePerson>,
-    val marriages: List<PersonMarriage>,
+    val relationships: List<PersonRelationship>,
 )

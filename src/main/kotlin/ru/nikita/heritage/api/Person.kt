@@ -15,6 +15,8 @@ data class Person(
     val gender: Boolean,
     // фамилия после замужества
     val marriedLastName: String? = null,
+    // биография
+    val biography: String? = null,
     // место рождения
     val birthPlace: String? = null,
     // место смерти
@@ -27,6 +29,6 @@ data class Person(
     val motherId: Long? = null,
     // идентификатор папы
     val fatherId: Long? = null,
-    // браки
-    val marriages: List<PersonMarriage> = emptyList(),
+    // отношения
+    val relationships: List<PersonRelationship> = emptyList(),
 )

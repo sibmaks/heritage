@@ -5,9 +5,9 @@ import org.springframework.transaction.annotation.Transactional
 import ru.nikita.heritage.api.*
 import ru.nikita.heritage.converter.PersonConverter
 import ru.nikita.heritage.entity.DivorceEntity
-import ru.nikita.heritage.entity.MarriageEntity
+import ru.nikita.heritage.entity.RelationshipEntity
 import ru.nikita.heritage.entity.PlaceEntity
-import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.RelationshipRepository
 import ru.nikita.heritage.repository.PersonRepository
 import ru.nikita.heritage.repository.PlaceRepository
 import java.util.*
@@ -20,7 +20,7 @@ import java.util.*
 @Service
 class RelationshipService(
     val personRepository: PersonRepository,
-    val marriageRepository: MarriageRepository,
+    val relationshipRepository: RelationshipRepository,
     val placeRepository: PlaceRepository,
     val personConverter: PersonConverter,
 ) {
@@ -41,21 +41,22 @@ class RelationshipService(
     }
 
     @Transactional
-    fun addMarriage(personId: Long, request: MarriageRequest): Long {
+    fun addRelationship(personId: Long, request: RelationshipRequest): Long {
         val person = personRepository.findById(personId)
             .orElseThrow { IllegalArgumentException("Человек с id: $personId не найден") }
         val spouse = personRepository.findById(request.spouseId)
             .orElseThrow { IllegalArgumentException("Супруг с id: ${request.spouseId} не найден") }
-        val marriage = MarriageEntity(
+        val relationship = RelationshipEntity(
             spouseA = person,
             spouseB = spouse,
+            relationshipType = request.relationshipType,
             registrationDate = personConverter.map(request.registrationDate),
             registrationPlace = buildPlace(request.registrationPlace),
             divorce = request.divorceDate?.let { date ->
                 DivorceEntity(divorceDate = personConverter.map(date))
             },
         )
-        return marriageRepository.save(marriage).id
+        return relationshipRepository.save(relationship).id
     }
 
     fun getRelatives(personId: Long, depth: Int): RelativesResponse {
@@ -65,7 +66,7 @@ class RelationshipService(
         val visited = mutableSetOf(personId)
         val queue: ArrayDeque<Pair<Long, Int>> = ArrayDeque()
         val persons = mutableListOf<RelativePerson>()
-        val marriages = LinkedHashMap<Long, PersonMarriage>()
+        val relationships = LinkedHashMap<Long, PersonRelationship>()
         queue.add(personId to 0)
         while (queue.isNotEmpty()) {
             val (currentId, currentDepth) = queue.removeFirst()
@@ -77,30 +78,32 @@ class RelationshipService(
                 if (visited.add(neighbor.id)) {
                     val relative = buildRelative(neighbor)
                     persons.add(relative)
-                    val relativeMarriages = marriageRepository.findAllBySpouseA_IdOrSpouseB_Id(relative.id, relative.id)
-                        .map { marriage ->
-                            PersonMarriage(
-                                id = marriage.id,
-                                husbandId = marriage.spouseA.id,
-                                wifeId = marriage.spouseB.id,
-                                status = if (marriage.divorce == null) {
-                                    MarriageStatus.ACTIVE
+                    val relativeRelationships = relationshipRepository
+                        .findAllBySpouseA_IdOrSpouseB_Id(relative.id, relative.id)
+                        .map { relationship ->
+                            PersonRelationship(
+                                id = relationship.id,
+                                husbandId = relationship.spouseA.id,
+                                wifeId = relationship.spouseB.id,
+                                relationshipType = relationship.relationshipType,
+                                status = if (relationship.divorce == null) {
+                                    RelationshipStatus.ACTIVE
                                 } else {
-                                    MarriageStatus.FORMER
+                                    RelationshipStatus.FORMER
                                 },
-                                registrationDate = personConverter.map(marriage.registrationDate),
-                                registrationPlace = marriage.registrationPlace?.name,
-                                divorceDate = personConverter.map(marriage.divorce?.divorceDate),
+                                registrationDate = personConverter.map(relationship.registrationDate),
+                                registrationPlace = relationship.registrationPlace?.name,
+                                divorceDate = personConverter.map(relationship.divorce?.divorceDate),
                             )
                         }
-                    relativeMarriages.forEach { marriage ->
-                        marriages.putIfAbsent(marriage.id, marriage)
+                    relativeRelationships.forEach { relationship ->
+                        relationships.putIfAbsent(relationship.id, relationship)
                     }
                     queue.add(neighbor.id to currentDepth + 1)
                 }
             }
         }
-        return RelativesResponse(persons = persons, marriages = marriages.values.toList())
+        return RelativesResponse(persons = persons, relationships = relationships.values.toList())
     }
 
     private fun getNeighbors(personId: Long): Set<ru.nikita.heritage.entity.PersonEntity> {

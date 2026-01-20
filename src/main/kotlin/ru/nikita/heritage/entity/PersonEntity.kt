@@ -28,6 +28,8 @@ data class PersonEntity(
     var gender: Boolean,
     @Column(name = "married_last_name") // колонка фамилия после замужества
     var marriedLastName: String? = null,
+    @Column(name = "biography")
+    var biography: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "birth_place_id")
     var birthPlace: PlaceEntity? = null,

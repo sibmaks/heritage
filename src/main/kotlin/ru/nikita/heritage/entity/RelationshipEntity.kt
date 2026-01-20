@@ -14,7 +14,10 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import org.hibernate.proxy.HibernateProxy
+import ru.nikita.heritage.api.RelationshipType
 
 /**
  *
@@ -22,8 +25,8 @@ import org.hibernate.proxy.HibernateProxy
  * @since 0.0.1
  */
 @Entity
-@Table(name = "marriage")
-data class MarriageEntity(
+@Table(name = "relationship")
+data class RelationshipEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L,
@@ -33,6 +36,9 @@ data class MarriageEntity(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spouse_b_id")
     var spouseB: PersonEntity,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "relationship_type", nullable = false)
+    var relationshipType: RelationshipType = RelationshipType.MARRIAGE,
     @Embedded
     @AttributeOverrides(
         AttributeOverride(name = "type", column = Column(name = "registration_date_type")),
@@ -57,7 +63,7 @@ data class MarriageEntity(
         val thisEffectiveClass =
             if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
         if (thisEffectiveClass != oEffectiveClass) return false
-        other as MarriageEntity
+        other as RelationshipEntity
 
         return id == other.id
     }
