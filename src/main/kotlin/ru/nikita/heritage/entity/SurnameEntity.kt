@@ -14,12 +14,12 @@ import org.hibernate.proxy.HibernateProxy
  * @since 0.0.1
  */
 @Entity
-@Table(name = "surname")
+@Table(name = "person_surname")
 data class SurnameEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L,
-    @Column(name = "value", unique = true, nullable = false)
+    @Column(name = "surname_value", unique = true, nullable = false)
     var value: String,
 ) {
 
