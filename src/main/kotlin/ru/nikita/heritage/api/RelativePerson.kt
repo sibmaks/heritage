@@ -6,7 +6,7 @@ package ru.nikita.heritage.api
  * @since 0.0.1
  */
 data class RelativePerson(
-    val id: Long? = null,
+    val id: Long,
     val lastName: String? = null,
     val firstName: String? = null,
     val gender: Boolean,
@@ -15,5 +15,4 @@ data class RelativePerson(
     val deathDate: FlexibleDate? = null,
     val motherId: Long? = null,
     val fatherId: Long? = null,
-    val marriages: List<PersonMarriage> = emptyList(),
 )

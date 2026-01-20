@@ -3,11 +3,7 @@ package ru.nikita.heritage.controller
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.web.bind.annotation.*
-import ru.nikita.heritage.api.GedcomImportResult
-import ru.nikita.heritage.api.MarriageRequest
-import ru.nikita.heritage.api.ParentsRequest
-import ru.nikita.heritage.api.Person
-import ru.nikita.heritage.api.RelativePerson
+import ru.nikita.heritage.api.*
 import ru.nikita.heritage.service.GedcomService
 import ru.nikita.heritage.service.PersonService
 import ru.nikita.heritage.service.RelationshipService
@@ -90,7 +86,7 @@ class HeritageRestController(
     fun getRelatives(
         @PathVariable personId: Long,
         @RequestParam depth: Int
-    ): List<RelativePerson> {
+    ): RelativesResponse {
         return relationshipService.getRelatives(personId, depth)
     }
 
