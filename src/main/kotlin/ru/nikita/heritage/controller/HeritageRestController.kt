@@ -7,6 +7,7 @@ import ru.nikita.heritage.api.GedcomImportResult
 import ru.nikita.heritage.api.MarriageRequest
 import ru.nikita.heritage.api.ParentsRequest
 import ru.nikita.heritage.api.Person
+import ru.nikita.heritage.api.RelativePerson
 import ru.nikita.heritage.service.GedcomService
 import ru.nikita.heritage.service.PersonService
 import ru.nikita.heritage.service.RelationshipService
@@ -89,7 +90,7 @@ class HeritageRestController(
     fun getRelatives(
         @PathVariable personId: Long,
         @RequestParam depth: Int
-    ): List<Person> {
+    ): List<RelativePerson> {
         return relationshipService.getRelatives(personId, depth)
     }
 

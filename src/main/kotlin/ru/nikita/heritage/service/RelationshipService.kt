@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import ru.nikita.heritage.api.MarriageRequest
 import ru.nikita.heritage.api.ParentsRequest
 import ru.nikita.heritage.api.Person
+import ru.nikita.heritage.api.RelativePerson
 import ru.nikita.heritage.converter.PersonConverter
 import ru.nikita.heritage.entity.DivorceEntity
 import ru.nikita.heritage.entity.MarriageEntity
@@ -60,13 +61,13 @@ class RelationshipService(
         return marriageRepository.save(marriage).id
     }
 
-    fun getRelatives(personId: Long, depth: Int): List<Person> {
+    fun getRelatives(personId: Long, depth: Int): List<RelativePerson> {
         if (depth < 1) {
             return emptyList()
         }
         val visited = mutableSetOf(personId)
         val queue: ArrayDeque<Pair<Long, Int>> = ArrayDeque()
-        val result = mutableListOf<Person>()
+        val result = mutableListOf<RelativePerson>()
         queue.add(personId to 0)
         while (queue.isNotEmpty()) {
             val (currentId, currentDepth) = queue.removeFirst()
@@ -95,7 +96,7 @@ class RelationshipService(
         return neighbors
     }
 
-    private fun buildRelative(person: ru.nikita.heritage.entity.PersonEntity): Person {
+    private fun buildRelative(person: ru.nikita.heritage.entity.PersonEntity): RelativePerson {
         val base = personConverter.map(person)
         val marriages = marriageRepository.findAllBySpouseA_IdOrSpouseB_Id(person.id, person.id)
             .map { marriage ->
@@ -113,9 +114,16 @@ class RelationshipService(
                     divorceDate = personConverter.map(marriage.divorce?.divorceDate),
                 )
             }
-        return base.copy(
-            birthPlace = null,
-            deathPlace = null,
+        return RelativePerson(
+            id = base.id,
+            lastName = base.lastName,
+            firstName = base.firstName,
+            gender = base.gender,
+            marriedLastName = base.marriedLastName,
+            birthDate = base.birthDate,
+            deathDate = base.deathDate,
+            motherId = base.motherId,
+            fatherId = base.fatherId,
             marriages = marriages,
         )
     }
