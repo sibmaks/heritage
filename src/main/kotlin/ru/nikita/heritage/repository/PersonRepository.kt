@@ -17,4 +17,6 @@ interface PersonRepository : JpaRepository<PersonEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select p from PersonEntity p where p.id = :personId")
     fun findByIdLocked(@Param("personId") personId: Long): Optional<PersonEntity>
+
+    fun findAllByMother_IdOrFather_Id(motherId: Long, fatherId: Long): List<PersonEntity>
 }

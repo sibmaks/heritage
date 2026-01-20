@@ -2,9 +2,19 @@ package ru.nikita.heritage.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import ru.nikita.heritage.api.MarriageStatus
 import ru.nikita.heritage.api.Person
+import ru.nikita.heritage.api.PersonMarriage
 import ru.nikita.heritage.converter.PersonConverter
+import ru.nikita.heritage.entity.DeathEntity
+import ru.nikita.heritage.entity.NameEntity
+import ru.nikita.heritage.entity.PlaceEntity
+import ru.nikita.heritage.entity.SurnameEntity
+import ru.nikita.heritage.repository.MarriageRepository
+import ru.nikita.heritage.repository.NameRepository
+import ru.nikita.heritage.repository.PlaceRepository
 import ru.nikita.heritage.repository.PersonRepository
+import ru.nikita.heritage.repository.SurnameRepository
 
 /**
  * Класс с логикой работы с людьми
@@ -14,6 +24,10 @@ import ru.nikita.heritage.repository.PersonRepository
 @Service
 class PersonService(
     val personRepository: PersonRepository,
+    val marriageRepository: MarriageRepository,
+    val placeRepository: PlaceRepository,
+    val nameRepository: NameRepository,
+    val surnameRepository: SurnameRepository,
     val personConverter: PersonConverter
 ) {
 
@@ -22,6 +36,10 @@ class PersonService(
      */
     fun add(person: Person): Long {
         var entity = personConverter.map(person)
+        entity.death = buildDeath(person)
+        entity.birthPlace = buildPlace(person.birthPlace)
+        entity.firstName = buildName(person.firstName)
+        entity.lastName = buildSurname(person.lastName)
         entity = personRepository.save(entity)
         return entity.id
     }
@@ -34,12 +52,14 @@ class PersonService(
         var entity = personRepository.findByIdLocked(id)
             .orElseThrow { IllegalArgumentException("Человек с id: $id не найден") }
         entity.apply {
-            lastName = person.lastName
-            firstName = person.firstName
-            middleName = person.middleName
-            birthDate = person.birthDate
-            deathDate = person.deathDate
+            gender = person.gender
+            marriedLastName = person.marriedLastName
+            birthPlace = buildPlace(person.birthPlace)
+            birthDate = personConverter.map(person.birthDate)
+            death = buildDeath(person)
         }
+        entity.firstName = buildName(person.firstName)
+        entity.lastName = buildSurname(person.lastName)
         entity = personRepository.save(entity)
         return entity.id
     }
@@ -50,7 +70,24 @@ class PersonService(
     fun getById(id: Long): Person {
         val entity = personRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Человек с id: $id не найден") }
-        return personConverter.map(entity)
+        val person = personConverter.map(entity)
+        val marriages = marriageRepository.findAllBySpouseA_IdOrSpouseB_Id(id, id)
+            .map { marriage ->
+                PersonMarriage(
+                    id = marriage.id,
+                    husbandId = marriage.spouseA.id,
+                    wifeId = marriage.spouseB.id,
+                    status = if (marriage.divorce == null) {
+                        MarriageStatus.ACTIVE
+                    } else {
+                        MarriageStatus.FORMER
+                    },
+                    registrationDate = personConverter.map(marriage.registrationDate),
+                    registrationPlace = marriage.registrationPlace?.name,
+                    divorceDate = personConverter.map(marriage.divorce?.divorceDate),
+                )
+            }
+        return person.copy(marriages = marriages)
     }
 
     /**
@@ -58,6 +95,40 @@ class PersonService(
      */
     fun deleteById(id: Long) {
         personRepository.deleteById(id)
+    }
+
+    private fun buildDeath(person: Person): DeathEntity? {
+        if (person.deathDate == null && person.deathPlace == null) {
+            return null
+        }
+        return DeathEntity(
+            deathDate = personConverter.map(person.deathDate),
+            deathPlace = buildPlace(person.deathPlace),
+        )
+    }
+
+    private fun buildPlace(place: String?): PlaceEntity? {
+        if (place.isNullOrBlank()) {
+            return null
+        }
+        return placeRepository.findByName(place)
+            .orElseGet { placeRepository.save(PlaceEntity(name = place)) }
+    }
+
+    private fun buildName(name: String?): NameEntity? {
+        if (name.isNullOrBlank()) {
+            return null
+        }
+        return nameRepository.findByValue(name)
+            .orElseGet { nameRepository.save(NameEntity(value = name)) }
+    }
+
+    private fun buildSurname(surname: String?): SurnameEntity? {
+        if (surname.isNullOrBlank()) {
+            return null
+        }
+        return surnameRepository.findByValue(surname)
+            .orElseGet { surnameRepository.save(SurnameEntity(value = surname)) }
     }
 
 }
